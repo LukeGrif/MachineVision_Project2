@@ -49,6 +49,11 @@ class SpeedSignClassifier:
                           self.template_vectors,
                           metric='euclidean')
 
-        # Find nearest neighbor
         nearest_idx = np.argmin(distances)
+        nearest_distance = distances[0][nearest_idx]
+
+        # Reject if distance is too large (not similar enough)
+        if nearest_distance > 1:  # Added this as it couldn't understand signs further away
+            print('Not accurate enough')
+            return -1
         return int(self.categories[nearest_idx])

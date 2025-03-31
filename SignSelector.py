@@ -71,8 +71,32 @@ class SpeedSignDetector:
         for i, detection in enumerate(results, 1):
             x1, y1, x2, y2 = detection['bbox']
             speed = detection['speed']
-            print(f"Sign {i}: {speed} km/h at [({x1},{y1}) to ({x2},{y2})]")
-        print()
+            print(f"Sign {i}: {speed} km/h")
+
+        print(f"{len(results)} speed sign{'s' if len(results) != 1 else ''} detected in this image")
+
+import os
+import glob
+import sys
+
+# if __name__ == "__main__":
+#     folder = "speed-sign-test-images"
+#     image_paths = glob.glob(os.path.join(folder, "*.png"))
+#
+#     if not image_paths:
+#         print(f"No .png files found in folder '{folder}'.")
+#         sys.exit(1)
+#
+#     detector = SpeedSignDetector()
+#
+#     for image_path in sorted(image_paths):
+#         results = detector.process_image(image_path)
+#
+#         # Display bounding boxes (optional)
+#         detector.display_results(image_path, results)
+#
+#         # Print to terminal in your desired format
+#         detector.print_terminal_output(results)
 
 
 if __name__ == "__main__":
