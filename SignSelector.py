@@ -93,10 +93,11 @@ import sys
 #         results = detector.process_image(image_path)
 #
 #         # Display bounding boxes (optional)
-#         detector.display_results(image_path, results)
-#
+#         # detector.display_results(image_path, results)
+#         print()
 #         # Print to terminal in your desired format
 #         detector.print_terminal_output(results)
+#         print(image_path)
 
 
 if __name__ == "__main__":

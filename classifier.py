@@ -53,7 +53,7 @@ class SpeedSignClassifier:
         nearest_distance = distances[0][nearest_idx]
 
         # Reject if distance is too large (not similar enough)
-        if nearest_distance > 1:  # Added this as it couldn't understand signs further away
+        if nearest_distance > 1.15:  # Added this as it couldn't understand signs further away
             print('Not accurate enough')
             return -1
         return int(self.categories[nearest_idx])
