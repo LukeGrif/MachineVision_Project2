@@ -7,8 +7,9 @@ from classifier import SpeedSignClassifier
 
 
 class SpeedSignDetector:
-    def __init__(self):
+    def __init__(self, propose_regions_params=None):
         self.classifier = SpeedSignClassifier()
+        self.propose_regions_params = propose_regions_params or {}
 
     def process_image(self, image_path):
         """
@@ -19,8 +20,8 @@ class SpeedSignDetector:
         if img.shape[2] == 4:  # Remove alpha channel if present
             img = img[:, :, :3]
 
-        # Detect regions
-        regions = propose_regions(img)
+        # Detect regions with parameters
+        regions = propose_regions(img, **self.propose_regions_params, show_plots=True)  # Enable plots
 
         # Classify each region
         results = []
