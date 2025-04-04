@@ -13,22 +13,23 @@ class SpeedSignDetector:
 
     def process_image(self, image_path):
         """
-        Process an image and return detected signs with labels.
+        processes the image and returns any speed signs detected
+
         """
-        # Load image
+        
         img = np.array(Image.open(image_path))
-        if img.shape[2] == 4:  # Remove alpha channel if present
+        if img.shape[2] == 4:  
             img = img[:, :, :3]
 
-        # Detect regions with parameters
-        regions = propose_regions(img, **self.propose_regions_params, show_plots=True)  # Enable plots
+        
+        regions = propose_regions(img, **self.propose_regions_params, show_plots=True)  
 
-        # Classify each region
+        
         results = []
         for x1, y1, x2, y2 in regions:
             roi = img[y1:y2, x1:x2]
             speed = self.classifier.classify(roi)
-            if speed != -1:  # Only keep valid speed signs
+            if speed != -1: 
                 results.append({
                     'bbox': (x1, y1, x2, y2),
                     'speed': speed
@@ -38,7 +39,7 @@ class SpeedSignDetector:
 
     def display_results(self, image_path, results):
         """
-        Display the image with bounding boxes and speed labels.
+        Display the input image with bounding boxes and speeds
         """
         img = np.array(Image.open(image_path))
         if img.shape[2] == 4:
@@ -50,14 +51,13 @@ class SpeedSignDetector:
         for detection in results:
             x1, y1, x2, y2 = detection['bbox']
             speed = detection['speed']
-
-            # Draw bounding box
+          
             rect = patches.Rectangle(
                 (x1, y1), x2 - x1, y2 - y1,
                 linewidth=2, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
 
-            # Add label
+            
             ax.text(x1, y1 - 10, f"{speed} km/h",
                     color='red', fontsize=12, weight='bold')
 
@@ -80,27 +80,6 @@ import os
 import glob
 import sys
 
-# if __name__ == "__main__":
-#     folder = "speed-sign-test-images"
-#     image_paths = glob.glob(os.path.join(folder, "*.png"))
-#
-#     if not image_paths:
-#         print(f"No .png files found in folder '{folder}'.")
-#         sys.exit(1)
-#
-#     detector = SpeedSignDetector()
-#
-#     for image_path in sorted(image_paths):
-#         results = detector.process_image(image_path)
-#
-#         # Display bounding boxes (optional)
-#         # detector.display_results(image_path, results)
-#         print()
-#         # Print to terminal in your desired format
-#         detector.print_terminal_output(results)
-#         print(image_path)
-
-
 if __name__ == "__main__":
     import sys
 
@@ -111,8 +90,8 @@ if __name__ == "__main__":
     detector = SpeedSignDetector()
     results = detector.process_image(sys.argv[1])
 
-    # Display visual results
+ 
     detector.display_results(sys.argv[1], results)
 
-    # Print terminal output
+    
     detector.print_terminal_output(results)

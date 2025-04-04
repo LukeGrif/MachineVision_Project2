@@ -1,31 +1,38 @@
 import numpy as np
 from skimage.color import rgb2hsv
-from scipy.ndimage import label, binary_closing, binary_opening, binary_erosion
+from scipy.ndimage import label, binary_closing, binary_opening, binary_erosion, binary_dilation
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 
-def propose_regions(rgb_image, huemin=0.949, huemax=0.048, sat_thresh=0.265, val_thresh=0.11, show_plots=False):
-    hsv_image = rgb2hsv(rgb_image)
+# the optimal values for each paramter was chosen through repeated trial and error
+def propose_regions(rgb_image, hueMin=0.949, 
+                    hueMax=0.048, 
+                    saturation=0.265, 
+                    value=0.11, 
+                    show_plots=False):
+    hsv_image = rgb2hsv(rgb_image) # convert to HSV image
 
-    # Use parameters for thresholds
+    # extract the hue saturation adn value from the image
     hue = hsv_image[..., 0]
     sat = hsv_image[..., 1]
     val = hsv_image[..., 2]
 
-    hue_mask = (hue > huemin) | (hue < huemax)
-    sat_mask = sat > sat_thresh
-    val_mask = val > val_thresh
+    hue_mask = (hue > hueMin) | (hue < hueMax)
+    sat_mask = sat > saturation
+    val_mask = val > value
 
     combined_mask = hue_mask & sat_mask & val_mask
 
     # Morphological operations
-    cleaned_mask = binary_closing(combined_mask, structure=np.ones((5, 5)))
+    cleaned_mask = binary_closing(combined_mask, structure=np.ones((5, 5))) # changed
     cleaned_mask = binary_opening(cleaned_mask, structure=np.ones((3, 3)))
 
-    # Add binary erosion mask which culls pixels at the detection boundaries, preventing false positives
+    # Add binary erosion mask which culls pixels at the detection boundaries, 
+    # preventing false positives
     eroded_mask = binary_erosion(cleaned_mask, structure=np.ones((3, 3)))
     labeled_mask, num_features = label(eroded_mask)
     
+    # loop through all the connected components in the binary mask and filter them for size and shape
     regions = []
     for i in range(1, num_features + 1):
         rows, cols = np.where(labeled_mask == i)
@@ -37,15 +44,17 @@ def propose_regions(rgb_image, huemin=0.949, huemax=0.048, sat_thresh=0.265, val
         width, height = x2 - x1, y2 - y1
         aspect_ratio = width / height if height > 0 else 0
 
+        # if region area is greater than 100, the aspect ration is greater than 0.5 and less than 2.0, and the width and height are greater than 20, 
+        # and the width and height are both greater than 20, add that region to the list
         if (width * height > 100 and
             0.5 < aspect_ratio < 2.0 and
             width > 20 and height > 20):
             regions.append((x1, y1, x2, y2))
             
-    # Add fallback: if no regions detected, use a dilated version of the original binary mask
-    # so that pixels that are almost within the threshold and are adjacent to valid pixels are included.
+    # if no regions detected, use a dilated version of the original binary mask
+    # so that pixels that are almost within the threshold and are adjacent to 
+    # valid pixels are included.
     if not regions:
-        from scipy.ndimage import binary_dilation
         fallback_mask = binary_dilation(combined_mask, structure=np.ones((3, 3)))
         fallback_label, fallback_num = label(fallback_mask)
         max_area = 0
@@ -60,10 +69,12 @@ def propose_regions(rgb_image, huemin=0.949, huemax=0.048, sat_thresh=0.265, val
             height = y2 - y1
             aspect_ratio = width / height if height > 0 else 0
             area = width * height
+            # the area must be greater than the current max area & 100
             if area > max_area and area > 100 and 0.5 < aspect_ratio < 2.0 and width > 20 and height > 20:
                 max_area = area
                 fallback_region = (x1, y1, x2, y2)
-        # If any row or column in the fallback region is filled with 1s, diregard this region, since this is a straight line
+        # If any row or column in the fallback region is filled with 1s, 
+        # diregard this region, since this is a straight line
         if fallback_region is not None:
             fx1, fy1, fx2, fy2 = fallback_region
             region_mask = fallback_mask[fy1:fy2, fx1:fx2]
@@ -73,20 +84,21 @@ def propose_regions(rgb_image, huemin=0.949, huemax=0.048, sat_thresh=0.265, val
         if fallback_region is not None:
             regions.append(fallback_region)
 
+    
     if show_plots:
-        plt.figure(figsize=(10, 4))
+        plt.figure(figsize=(10,4))
         plt.subplot(1, 3, 1)
         plt.title("Binary Mask (Red Detection)")
         plt.imshow(hue_mask, cmap='gray')
         plt.axis('off')
 
         plt.subplot(1, 3, 2)
-        plt.title("Cleaned Mask")
+        plt.title("Saturation mask")
         plt.imshow(sat_mask, cmap='gray')
         plt.axis('off')
 
-        plt.subplot(1, 3, 3)
-        plt.title("Cleaned Mask")
+        plt.subplot(1,3,3)
+        plt.title("value mask")
         plt.imshow(val_mask, cmap='gray')
         plt.axis('off')
 
